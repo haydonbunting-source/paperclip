@@ -40,7 +40,7 @@ describe("grok_local testEnvironment", () => {
     runProcessMock.mockReset();
   });
 
-  it("reports a healthy authenticated host with a working hello probe", async () => {
+  it("reports a healthy authenticated host with a working hello probe without permission bypass defaults", async () => {
     runProcessMock
       .mockResolvedValueOnce({
         exitCode: 0,
@@ -94,15 +94,15 @@ describe("grok_local testEnvironment", () => {
       expect.arrayContaining([
         "--output-format",
         "streaming-json",
-        "--always-approve",
-        "--permission-mode",
-        "dontAsk",
         "--disable-web-search",
         "--single",
         "Respond with exactly hello.",
       ]),
       expect.any(Object),
     );
+    const helloArgs = runProcessMock.mock.calls[1]?.[3] as string[];
+    expect(helloArgs).not.toContain("--always-approve");
+    expect(helloArgs).not.toContain("--permission-mode");
   });
 
   it("downgrades auth failures to warnings", async () => {

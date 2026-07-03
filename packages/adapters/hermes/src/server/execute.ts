@@ -70,6 +70,39 @@ function cfgStringArray(v: unknown): string[] | undefined {
     : undefined;
 }
 
+const SAFE_HOST_ENV_KEYS = new Set([
+  "PATH",
+  "HOME",
+  "USER",
+  "LOGNAME",
+  "SHELL",
+  "LANG",
+  "LC_ALL",
+  "TMPDIR",
+  "TEMP",
+  "TMP",
+  "XDG_CONFIG_HOME",
+  "XDG_CACHE_HOME",
+  "XDG_DATA_HOME",
+  "HERMES_HOME",
+  "HERMES_CONFIG",
+  "HERMES_PROFILE",
+  "PAPERCLIP_API_URL",
+  "PAPERCLIP_RUNTIME_API_URL",
+  "PAPERCLIP_RUNTIME_API_CANDIDATES_JSON",
+  "PAPERCLIP_LISTEN_HOST",
+  "PAPERCLIP_LISTEN_PORT",
+]);
+
+export function buildSafeHostEnv(processEnv: NodeJS.ProcessEnv): Record<string, string> {
+  const env: Record<string, string> = {};
+  for (const key of SAFE_HOST_ENV_KEYS) {
+    const value = processEnv[key];
+    if (typeof value === "string" && value.length > 0) env[key] = value;
+  }
+  return env;
+}
+
 export function resolveHermesCommand(config: Record<string, unknown>): string {
   return cfgString(config.hermesCommand) || cfgString(config.command) || HERMES_CLI;
 }
@@ -437,12 +470,13 @@ export async function execute(
   // Requires hermes-agent >= PR #3255 (feat/session-source-tag).
   args.push("--source", "tool");
 
-  // Bypass Hermes dangerous-command approval prompts.
-  // Paperclip agents run as non-interactive subprocesses with no TTY,
-  // so approval prompts would always timeout and deny legitimate commands
-  // (curl, python3 -c, etc.). Agents operate in a sandbox — the approval
-  // system is designed for human-attended interactive sessions.
-  args.push("--yolo");
+  // Do not bypass Hermes dangerous-command approval prompts by default.
+  // Operators can opt in per-agent with `dangerouslySkipPermissions: true`,
+  // but the hardened default is fail-closed rather than granting unattended
+  // shell authority silently.
+  if (cfgBoolean(config.dangerouslySkipPermissions) === true) {
+    args.push("--yolo");
+  }
 
   if (persistSession && prevSessionId) {
     args.push("--resume", prevSessionId);
@@ -455,7 +489,7 @@ export async function execute(
   // ── Build environment ──────────────────────────────────────────────────
   const userEnv = config.env as Record<string, string> | undefined;
   const env: Record<string, string> = {
-    ...(process.env as Record<string, string>),
+    ...buildSafeHostEnv(process.env),
     ...(userEnv && typeof userEnv === "object" ? userEnv : {}),
     ...buildPaperclipEnv(ctx.agent),
   };

@@ -11,6 +11,7 @@ import {
   asString,
   parseObject,
 } from "@paperclipai/adapter-utils/server-utils";
+import { DEFAULT_ACPX_LOCAL_PERMISSION_MODE } from "../index.js";
 
 const require = createRequire(import.meta.url);
 const MIN_NODE_MAJOR = 22;
@@ -273,11 +274,11 @@ export async function testEnvironment(
   const stateDirCheck = await checkDirectory(asString(config.stateDir, ""), "acpx_state_dir_writable", "ACPX state directory");
   if (stateDirCheck) checks.push(stateDirCheck);
 
-  const permissionMode = asString(config.permissionMode, "approve-all");
+  const permissionMode = asString(config.permissionMode, DEFAULT_ACPX_LOCAL_PERMISSION_MODE);
   checks.push({
     code: "acpx_permission_mode",
     level: "info",
-    message: `Effective permission mode: ${permissionMode || "approve-all"}`,
+    message: `Effective permission mode: ${permissionMode || DEFAULT_ACPX_LOCAL_PERMISSION_MODE}`,
   });
 
   checks.push({

@@ -14,6 +14,7 @@ import {
   parseJson,
   parseObject,
   ensurePathInEnv,
+  sanitizeInheritedPaperclipEnv,
 } from "@paperclipai/adapter-utils/server-utils";
 import {
   ensureAdapterExecutionTargetCommandResolvable,
@@ -204,7 +205,7 @@ export async function testEnvironment(
       }
     }
   }
-  const runtimeEnv = ensurePathInEnv({ ...process.env, ...env });
+  const runtimeEnv = ensurePathInEnv({ ...sanitizeInheritedPaperclipEnv(process.env), ...env });
   try {
     await ensureAdapterExecutionTargetCommandResolvable(command, target, cwd, runtimeEnv);
     checks.push({
@@ -289,7 +290,7 @@ export async function testEnvironment(
       const effort = asString(config.effort, "").trim();
       const chrome = asBoolean(config.chrome, false);
       const maxTurns = asNumber(config.maxTurnsPerRun, 0);
-      const dangerouslySkipPermissions = asBoolean(config.dangerouslySkipPermissions, true);
+      const dangerouslySkipPermissions = asBoolean(config.dangerouslySkipPermissions, false);
       const extraArgs = (() => {
         const fromExtraArgs = asStringArray(config.extraArgs);
         if (fromExtraArgs.length > 0) return fromExtraArgs;

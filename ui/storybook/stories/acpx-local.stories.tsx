@@ -52,7 +52,7 @@ const acpxLocalConfigSchema: AdapterConfigSchema = {
         { value: "deny", label: "Deny" },
         { value: "fail", label: "Fail" },
       ],
-      hint: "Fallback if the ACP agent asks for input outside an interactive session. Paperclip still auto-approves permissions by default.",
+      hint: "Fallback if the ACP agent asks for input outside an interactive session. Paperclip denies ACPX permission requests by default; opt into broader permissionMode only for trusted/sandboxed agents.",
     },
     {
       key: "cwd",
@@ -156,7 +156,7 @@ function AcpxLocalConfigStory() {
         <h1 className="text-2xl font-semibold tracking-tight">Agent config — acpx_local</h1>
         <p className="text-sm text-muted-foreground">
           Renders the schema-driven adapter config block exactly as the operator sees it inside the agent edit form.
-          Defaults reflect Phase 3 of PAP-2944: maximum-permission auto-approve, persistent session mode, Claude as the
+          Defaults reflect hardened ACPX behavior: denied permissions, persistent session mode, Claude as the
           default ACP agent.
         </p>
       </header>
@@ -212,7 +212,7 @@ function useAcpxTranscript(): TranscriptEntry[] {
             type: "acpx.session",
             agent: "claude",
             mode: "persistent",
-            permissionMode: "approve-all",
+            permissionMode: "deny-all",
             acpSessionId: "acp_session_42a8c1",
             runtimeSessionName: "acpx-claude-PAP-1812",
           },
@@ -552,7 +552,7 @@ function buildAcpxAgent({
     adapterConfig: {
       agent: acpAgent,
       mode: "persistent",
-      permissionMode: "approve-all",
+      permissionMode: "deny-all",
       paperclipSkillSync: {
         desiredSkills,
       },

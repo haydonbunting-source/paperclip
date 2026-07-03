@@ -108,7 +108,6 @@ export async function discoverPiModels(input: {
   const command = resolvePiCommand(input.command);
   const cwd = asString(input.cwd, process.cwd());
   const env = normalizeEnv(input.env);
-  const runtimeEnv = normalizeEnv({ ...process.env, ...env });
 
   const result = await runChildProcess(
     `pi-models-${Date.now()}-${Math.random().toString(16).slice(2)}`,
@@ -116,7 +115,7 @@ export async function discoverPiModels(input: {
     ["--list-models"],
     {
       cwd,
-      env: runtimeEnv,
+      env,
       timeoutSec: 20,
       graceSec: 3,
       onLog: async () => {},

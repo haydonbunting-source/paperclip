@@ -36,6 +36,7 @@ import {
   buildInvocationEnvForLogs,
   ensureAbsoluteDirectory,
   ensurePathInEnv,
+  sanitizeInheritedPaperclipEnv,
   refreshPaperclipWorkspaceEnvForExecution,
   renderTemplate,
   renderPaperclipWakePrompt,
@@ -276,7 +277,7 @@ async function buildClaudeRuntimeConfig(input: ClaudeExecutionInput): Promise<Cl
   }
 
   const runtimeEnv = Object.fromEntries(
-    Object.entries(ensurePathInEnv({ ...process.env, ...env })).filter(
+    Object.entries(ensurePathInEnv({ ...sanitizeInheritedPaperclipEnv(process.env), ...env })).filter(
       (entry): entry is [string, string] => typeof entry[1] === "string",
     ),
   );
@@ -382,7 +383,7 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
   const effort = asString(config.effort, "");
   const chrome = asBoolean(config.chrome, false);
   const maxTurns = asNumber(config.maxTurnsPerRun, 0);
-  const dangerouslySkipPermissions = asBoolean(config.dangerouslySkipPermissions, true);
+  const dangerouslySkipPermissions = asBoolean(config.dangerouslySkipPermissions, false);
   const configEnv = parseObject(config.env);
   const workspaceContext = parseObject(context.paperclipWorkspace);
   const workspaceCwd = asString(workspaceContext.cwd, "");
@@ -433,7 +434,7 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
     asNumber(config.terminalResultCleanupGraceMs, 5_000),
   );
   const effectiveEnv = Object.fromEntries(
-    Object.entries({ ...process.env, ...env }).filter(
+    Object.entries({ ...sanitizeInheritedPaperclipEnv(process.env), ...env }).filter(
       (entry): entry is [string, string] => typeof entry[1] === "string",
     ),
   );
@@ -584,7 +585,7 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
     });
     if (paperclipBridge) {
       Object.assign(env, paperclipBridge.env);
-      const runtimeEnv = ensurePathInEnv({ ...process.env, ...env });
+      const runtimeEnv = ensurePathInEnv({ ...sanitizeInheritedPaperclipEnv(process.env), ...env });
       loggedEnv = buildInvocationEnvForLogs(env, {
         runtimeEnv,
         includeRuntimeKeys: ["HOME", "CLAUDE_CONFIG_DIR"],

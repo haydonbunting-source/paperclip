@@ -26,6 +26,7 @@ import {
   buildPaperclipEnv,
   ensureAbsoluteDirectory,
   ensurePathInEnv,
+  sanitizeInheritedPaperclipEnv,
   joinPromptSections,
   materializePaperclipSkillCopy,
   parseObject,
@@ -202,10 +203,10 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
   );
   const command = asString(config.command, "grok");
   const model = asString(config.model, DEFAULT_GROK_LOCAL_MODEL).trim();
-  const permissionMode = asString(config.permissionMode, "dontAsk").trim() || "dontAsk";
+  const permissionMode = asString(config.permissionMode, "").trim();
   const reasoningEffort = asString(config.reasoningEffort, "").trim();
   const maxTurns = asNumber(config.maxTurns, 0);
-  const alwaysApprove = asBoolean(config.alwaysApprove, true);
+  const alwaysApprove = asBoolean(config.alwaysApprove, false);
   const disableWebSearch = asBoolean(config.disableWebSearch, true);
 
   const workspaceContext = parseObject(context.paperclipWorkspace);
@@ -348,7 +349,7 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
 
     const runtimeExecutionTarget = overrideAdapterExecutionTargetRemoteCwd(executionTarget, effectiveExecutionCwd);
     const effectiveEnv = Object.fromEntries(
-      Object.entries({ ...process.env, ...env }).filter(
+      Object.entries({ ...sanitizeInheritedPaperclipEnv(process.env), ...env }).filter(
         (entry): entry is [string, string] => typeof entry[1] === "string",
       ),
     );
@@ -388,7 +389,7 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
 
     const commandNotes = (() => {
       const notes: string[] = ["Prompt is passed to Grok via --single in headless mode."];
-      if (alwaysApprove) notes.push("Added --always-approve for unattended execution.");
+      if (alwaysApprove) notes.push("Added --always-approve because the agent explicitly enabled it.");
       if (stagedAssets.stagedInstructionsPath) {
         notes.push(`Staged project instructions at ${stagedAssets.stagedInstructionsPath} for native Grok discovery.`);
       }

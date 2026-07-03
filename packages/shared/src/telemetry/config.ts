@@ -7,6 +7,9 @@ function isCI(): boolean {
 }
 
 export function resolveTelemetryConfig(fileConfig?: { enabled?: boolean }): TelemetryConfig {
+  if (process.env.PAPERCLIP_TELEMETRY_ENABLED !== "1" && fileConfig?.enabled !== true) {
+    return { enabled: false };
+  }
   if (process.env.PAPERCLIP_TELEMETRY_DISABLED === "1") {
     return { enabled: false };
   }
@@ -14,9 +17,6 @@ export function resolveTelemetryConfig(fileConfig?: { enabled?: boolean }): Tele
     return { enabled: false };
   }
   if (isCI()) {
-    return { enabled: false };
-  }
-  if (fileConfig?.enabled === false) {
     return { enabled: false };
   }
 

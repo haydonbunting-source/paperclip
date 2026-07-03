@@ -4,10 +4,12 @@ import type {
   AdapterEnvironmentTestResult,
 } from "@paperclipai/adapter-utils";
 import {
+  asBoolean,
   asNumber,
   asString,
   asStringArray,
   ensurePathInEnv,
+  sanitizeInheritedPaperclipEnv,
   parseObject,
 } from "@paperclipai/adapter-utils/server-utils";
 import {
@@ -143,7 +145,7 @@ export async function testEnvironment(
   }
 
   const env = normalizeEnv(config.env);
-  const runtimeEnv = ensurePathInEnv({ ...process.env, ...env });
+  const runtimeEnv = ensurePathInEnv({ ...sanitizeInheritedPaperclipEnv(process.env), ...env });
 
   try {
     await ensureAdapterExecutionTargetCommandResolvable(command, target, cwd, runtimeEnv);
@@ -241,14 +243,15 @@ export async function testEnvironment(
   }
 
   if (canRunProbe) {
+    const alwaysApprove = asBoolean(config.alwaysApprove, false);
+    const permissionMode = asString(config.permissionMode, "").trim();
     const probeArgs = [
       "--output-format",
       "streaming-json",
-      "--always-approve",
-      "--permission-mode",
-      "dontAsk",
       "--disable-web-search",
     ];
+    if (alwaysApprove) probeArgs.push("--always-approve");
+    if (permissionMode) probeArgs.push("--permission-mode", permissionMode);
     if (configuredModel && configuredModel !== DEFAULT_GROK_LOCAL_MODEL) {
       probeArgs.push("--model", configuredModel);
     }

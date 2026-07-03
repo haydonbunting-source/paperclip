@@ -116,7 +116,7 @@ describe("cursor environment diagnostics", () => {
     await fs.rm(path.dirname(cwd), { recursive: true, force: true });
   });
 
-  it("adds --yolo to hello probe args by default", async () => {
+  it("does not add --yolo to hello probe args by default", async () => {
     const root = path.join(
       os.tmpdir(),
       `paperclip-cursor-local-probe-${Date.now()}-${Math.random().toString(16).slice(2)}`,
@@ -143,7 +143,7 @@ describe("cursor environment diagnostics", () => {
 
     expect(result.status).toBe("pass");
     const args = JSON.parse(await fs.readFile(argsCapturePath, "utf8")) as string[];
-    expect(args).toContain("--yolo");
+    expect(args).not.toContain("--yolo");
     await fs.rm(root, { recursive: true, force: true });
   });
 

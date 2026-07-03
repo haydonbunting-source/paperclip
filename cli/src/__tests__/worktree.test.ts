@@ -263,6 +263,26 @@ describe("worktree helpers", () => {
     expect(formatShellExports(env)).toContain("export PAPERCLIP_INSTANCE_ID='feature-worktree-support'");
   });
 
+  it("keeps generated worktree telemetry opt-in when the source config omits telemetry", () => {
+    const paths = resolveWorktreeLocalPaths({
+      cwd: "/tmp/paperclip-feature",
+      homeDir: "/tmp/paperclip-worktrees",
+      instanceId: "feature-worktree-support",
+    });
+    const sourceConfig = buildSourceConfig();
+    delete (sourceConfig as Partial<PaperclipConfig>).telemetry;
+
+    const config = buildWorktreeConfig({
+      sourceConfig,
+      paths,
+      serverPort: 3110,
+      databasePort: 54339,
+      now: new Date("2026-03-09T12:00:00.000Z"),
+    });
+
+    expect(config.telemetry.enabled).toBe(false);
+  });
+
   it("falls back across storage roots before skipping a missing attachment object", async () => {
     const missingErr = Object.assign(new Error("missing"), { code: "ENOENT" });
     const expected = Buffer.from("image-bytes");

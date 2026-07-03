@@ -35,6 +35,7 @@ import {
   ensurePaperclipSkillSymlink,
   joinPromptSections,
   ensurePathInEnv,
+  sanitizeInheritedPaperclipEnv,
   refreshPaperclipWorkspaceEnvForExecution,
   readPaperclipRuntimeSkillEntries,
   readPaperclipIssueWorkModeFromContext,
@@ -87,7 +88,7 @@ function buildGeminiHeadlessEnv(env: Record<string, string>): Record<string, str
 
 function buildGeminiRuntimeEnv(env: Record<string, string>): Record<string, string> {
   return Object.fromEntries(
-    Object.entries(ensurePathInEnv({ ...process.env, ...buildGeminiHeadlessEnv(env) })).filter(
+    Object.entries(ensurePathInEnv({ ...sanitizeInheritedPaperclipEnv(process.env), ...buildGeminiHeadlessEnv(env) })).filter(
       (entry): entry is [string, string] => typeof entry[1] === "string",
     ),
   );
@@ -208,7 +209,8 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
   );
   const command = asString(config.command, "gemini");
   const model = asString(config.model, DEFAULT_GEMINI_LOCAL_MODEL).trim();
-  const sandbox = asBoolean(config.sandbox, false);
+  const sandbox = asBoolean(config.sandbox, true);
+  const dangerouslySkipPermissions = asBoolean(config.dangerouslySkipPermissions, false);
 
   const workspaceContext = parseObject(context.paperclipWorkspace);
   const workspaceCwd = asString(workspaceContext.cwd, "");
@@ -488,7 +490,11 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
   }
   const commandNotes = (() => {
     const notes: string[] = ["Prompt is passed to Gemini via --prompt for non-interactive execution."];
-    notes.push("Added --approval-mode yolo for unattended execution.");
+    if (dangerouslySkipPermissions) {
+      notes.push("Added --approval-mode yolo because the agent explicitly enabled dangerouslySkipPermissions.");
+    } else {
+      notes.push("Gemini approval bypass is disabled by default; no --approval-mode yolo flag is added.");
+    }
     notes.push("Set headless terminal/browser env so Gemini fails fast instead of opening interactive auth or color prompts.");
     if (executionTargetIsRemote) {
       notes.push("Set GEMINI_CLI_TRUST_WORKSPACE=true for remote headless execution.");
@@ -550,10 +556,10 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
     const args = ["--output-format", "stream-json"];
     if (resumeSessionId) args.push("--resume", resumeSessionId);
     if (model && model !== DEFAULT_GEMINI_LOCAL_MODEL) args.push("--model", model);
-    args.push("--approval-mode", "yolo");
+    if (dangerouslySkipPermissions) args.push("--approval-mode", "yolo");
     if (sandbox) {
       args.push("--sandbox");
-    } else {
+    } else if (dangerouslySkipPermissions) {
       args.push("--sandbox=none");
     }
     if (extraArgs.length > 0) args.push(...extraArgs);

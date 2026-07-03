@@ -14,6 +14,7 @@ import {
   buildPaperclipEnv,
   ensureAbsoluteDirectory,
   ensurePathInEnv,
+  sanitizeInheritedPaperclipEnv,
   joinPromptSections,
   materializePaperclipSkillCopy,
   parseObject,
@@ -505,9 +506,9 @@ function normalizeMode(config: Record<string, unknown>): "persistent" | "oneshot
 
 function normalizePermissionMode(config: Record<string, unknown>): "approve-all" | "approve-reads" | "deny-all" {
   const value = asString(config.permissionMode, DEFAULT_ACPX_LOCAL_PERMISSION_MODE).trim();
-  if (value === "approve-reads" || value === "deny-all") return value;
-  if (value === "default") return "approve-reads";
-  return "approve-all";
+  if (value === "approve-all" || value === "approve-reads" || value === "deny-all") return value;
+  if (value === "default") return DEFAULT_ACPX_LOCAL_PERMISSION_MODE;
+  return DEFAULT_ACPX_LOCAL_PERMISSION_MODE;
 }
 
 function normalizeNonInteractivePermissions(config: Record<string, unknown>): "deny" | "fail" {
@@ -917,7 +918,7 @@ async function buildRuntime(input: {
   });
   const taskKey = asString(input.ctx.runtime.taskKey, "") || wakeTaskId || workspaceId || "default";
   const sessionKey = `paperclip:${agent.companyId}:${agent.id}:${taskKey}:${fingerprint}`;
-  const runtimeEnv = ensurePathInEnv({ ...process.env, ...env });
+  const runtimeEnv = ensurePathInEnv({ ...sanitizeInheritedPaperclipEnv(process.env), ...env });
   const loggedEnv = buildInvocationEnvForLogs(env, {
     runtimeEnv,
     includeRuntimeKeys: ["HOME"],

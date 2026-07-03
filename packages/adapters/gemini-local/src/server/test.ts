@@ -10,6 +10,7 @@ import {
   asString,
   asStringArray,
   ensurePathInEnv,
+  sanitizeInheritedPaperclipEnv,
   parseObject,
 } from "@paperclipai/adapter-utils/server-utils";
 import {
@@ -97,7 +98,7 @@ export async function testEnvironment(
   if (targetIsRemote && typeof env.GEMINI_CLI_TRUST_WORKSPACE !== "string") {
     env.GEMINI_CLI_TRUST_WORKSPACE = "true";
   }
-  const runtimeEnv = ensurePathInEnv({ ...process.env, ...env });
+  const runtimeEnv = ensurePathInEnv({ ...sanitizeInheritedPaperclipEnv(process.env), ...env });
   const installCheck = await maybeRunSandboxInstallCommand({
     runId,
     target,
@@ -168,8 +169,9 @@ export async function testEnvironment(
       });
     } else {
       const model = asString(config.model, DEFAULT_GEMINI_LOCAL_MODEL).trim();
-      const approvalMode = asString(config.approvalMode, asBoolean(config.yolo, false) ? "yolo" : "default");
-      const sandbox = asBoolean(config.sandbox, false);
+      const dangerouslySkipPermissions = asBoolean(config.dangerouslySkipPermissions, false);
+      const approvalMode = dangerouslySkipPermissions ? asString(config.approvalMode, "yolo") : "default";
+      const sandbox = asBoolean(config.sandbox, true);
       const helloProbeTimeoutSec = Math.max(1, asNumber(config.helloProbeTimeoutSec, 60));
       const extraArgs = (() => {
         const fromExtraArgs = asStringArray(config.extraArgs);
@@ -182,7 +184,7 @@ export async function testEnvironment(
       if (approvalMode !== "default") args.push("--approval-mode", approvalMode);
       if (sandbox) {
         args.push("--sandbox");
-      } else {
+      } else if (dangerouslySkipPermissions) {
         args.push("--sandbox=none");
       }
       if (extraArgs.length > 0) args.push(...extraArgs);

@@ -15,6 +15,7 @@ import {
   renderPaperclipWakePrompt,
   runningProcesses,
   runChildProcess,
+  sanitizeInheritedPaperclipEnv,
   sanitizeSshRemoteEnv,
   shapePaperclipWorkspaceEnvForExecution,
   rewriteWorkspaceCwdEnvVarsForExecution,
@@ -382,6 +383,32 @@ describe("adapter skill snapshots", () => {
       state: "stale",
       managed: true,
     }));
+  });
+});
+
+describe("sanitizeInheritedPaperclipEnv", () => {
+  it("keeps only non-secret runtime keys for child adapter processes", () => {
+    expect(
+      sanitizeInheritedPaperclipEnv({
+        PATH: "/usr/bin",
+        HOME: "/Users/operator",
+        CLAUDE_CONFIG_DIR: "/Users/operator/.claude",
+        TMPDIR: "/tmp/paperclip",
+        OPENAI_API_KEY: "sk-sho...leak",
+        ANTHROPIC_API_KEY: "sk-ant...leak",
+        GITHUB_TOKEN: "ghp_should_not_leak",
+        AWS_SECRET_ACCESS_KEY: "should-not-leak",
+        RANDOM_SECRET: "should-not-leak",
+        PAPERCLIP_API_KEY: "paperclip-key-should-not-leak",
+        PAPERCLIP_RUNTIME_API_URL: "http://127.0.0.1:3100/api/runtime",
+      }),
+    ).toEqual({
+      PATH: "/usr/bin",
+      HOME: "/Users/operator",
+      CLAUDE_CONFIG_DIR: "/Users/operator/.claude",
+      TMPDIR: "/tmp/paperclip",
+      PAPERCLIP_RUNTIME_API_URL: "http://127.0.0.1:3100/api/runtime",
+    });
   });
 });
 

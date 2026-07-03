@@ -67,7 +67,7 @@ describe("gemini_local environment diagnostics", () => {
     await fs.rm(path.dirname(cwd), { recursive: true, force: true });
   });
 
-  it("passes model and yolo flags to the hello probe", async () => {
+  it("passes model but ignores legacy yolo unless dangerous permission bypass is explicit", async () => {
     const root = path.join(
       os.tmpdir(),
       `paperclip-gemini-local-probe-${Date.now()}-${Math.random().toString(16).slice(2)}`,
@@ -98,9 +98,45 @@ describe("gemini_local environment diagnostics", () => {
     const args = JSON.parse(await fs.readFile(argsCapturePath, "utf8")) as string[];
     expect(args).toContain("--model");
     expect(args).toContain("gemini-2.5-pro");
+    expect(args).not.toContain("--approval-mode");
+    expect(args).not.toContain("yolo");
+    expect(args).toContain("--sandbox");
+    expect(args).toContain("--prompt");
+    await fs.rm(root, { recursive: true, force: true });
+  });
+
+  it("passes approval-mode yolo only when dangerouslySkipPermissions is explicit", async () => {
+    const root = path.join(
+      os.tmpdir(),
+      `paperclip-gemini-local-probe-danger-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    );
+    const binDir = path.join(root, "bin");
+    const cwd = path.join(root, "workspace");
+    const argsCapturePath = path.join(root, "args.json");
+    await fs.mkdir(binDir, { recursive: true });
+    await writeFakeGeminiCommand(binDir, argsCapturePath);
+
+    const result = await testEnvironment({
+      companyId: "company-1",
+      adapterType: "gemini_local",
+      config: {
+        command: "gemini",
+        cwd,
+        dangerouslySkipPermissions: true,
+        sandbox: false,
+        env: {
+          GEMINI_API_KEY: "test-key",
+          PAPERCLIP_TEST_ARGS_PATH: argsCapturePath,
+          PATH: `${binDir}${path.delimiter}${process.env.PATH ?? ""}`,
+        },
+      },
+    });
+
+    expect(result.status).not.toBe("fail");
+    const args = JSON.parse(await fs.readFile(argsCapturePath, "utf8")) as string[];
     expect(args).toContain("--approval-mode");
     expect(args).toContain("yolo");
-    expect(args).toContain("--prompt");
+    expect(args).toContain("--sandbox=none");
     await fs.rm(root, { recursive: true, force: true });
   });
 

@@ -65,7 +65,7 @@ function defaultConfig(): PaperclipConfig {
       disableSignUp: false,
     },
     telemetry: {
-      enabled: true,
+      enabled: false,
     },
     storage: defaultStorageConfig(),
     secrets: defaultSecretsConfig(),

@@ -34,7 +34,7 @@ export function getConfigSchema(): AdapterConfigSchema {
           { value: "deny", label: "Deny" },
           { value: "fail", label: "Fail" },
         ],
-        hint: "Fallback if the ACP agent asks for input outside an interactive session. Paperclip still auto-approves permissions by default.",
+        hint: "Fallback if the ACP agent asks for input outside an interactive session. Paperclip denies ACPX permission requests by default; opt into broader permissionMode only for trusted/sandboxed agents.",
       },
       {
         key: "cwd",

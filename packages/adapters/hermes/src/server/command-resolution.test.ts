@@ -4,7 +4,7 @@ import { chmod, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { expect, test } from "vitest";
 
 import { HERMES_CLI } from "../shared/constants.js";
-import { resolveHermesCommand } from "./execute.js";
+import { resolveHermesCommand, buildSafeHostEnv } from "./execute.js";
 import { testEnvironment } from "./test.js";
 
 test("resolveHermesCommand prefers hermesCommand over command", () => {
@@ -15,6 +15,21 @@ test("resolveHermesCommand prefers hermesCommand over command", () => {
 test("resolveHermesCommand falls back to command before default hermes binary", () => {
   expect(resolveHermesCommand({ command: "hermes_maximus" })).toBe("hermes_maximus");
   expect(resolveHermesCommand({})).toBe(HERMES_CLI);
+});
+
+test("buildSafeHostEnv drops API keys and other non-allowlisted host variables", () => {
+  expect(buildSafeHostEnv({
+    PATH: "/usr/bin",
+    HOME: "/tmp/home",
+    OPENAI_API_KEY: "sk-should-not-leak",
+    ANTHROPIC_API_KEY: "sk-should-not-leak",
+    RANDOM_SECRET: "should-not-leak",
+    PAPERCLIP_API_URL: "http://127.0.0.1:3100/api",
+  })).toEqual({
+    PATH: "/usr/bin",
+    HOME: "/tmp/home",
+    PAPERCLIP_API_URL: "http://127.0.0.1:3100/api",
+  });
 });
 
 test("testEnvironment accepts config.command when hermesCommand is absent", async () => {

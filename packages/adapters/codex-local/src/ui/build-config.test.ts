@@ -11,10 +11,10 @@ function makeValues(overrides: Partial<CreateConfigValues> = {}): CreateConfigVa
     model: "gpt-5.4",
     thinkingEffort: "",
     chrome: false,
-    dangerouslySkipPermissions: true,
+    dangerouslySkipPermissions: false,
     search: false,
     fastMode: false,
-    dangerouslyBypassSandbox: true,
+    dangerouslyBypassSandbox: false,
     command: "",
     args: "",
     extraArgs: "",
@@ -48,6 +48,18 @@ describe("buildCodexLocalConfig", () => {
       model: "gpt-5.4",
       search: true,
       fastMode: true,
+      dangerouslyBypassApprovalsAndSandbox: false,
+    });
+  });
+
+  it("persists the dangerous bypass only when explicitly enabled", () => {
+    const config = buildCodexLocalConfig(
+      makeValues({
+        dangerouslyBypassSandbox: true,
+      }),
+    );
+
+    expect(config).toMatchObject({
       dangerouslyBypassApprovalsAndSandbox: true,
     });
   });

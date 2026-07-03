@@ -70,11 +70,10 @@ describe("grok_local execute", () => {
         expect.arrayContaining([
           "--output-format",
           "streaming-json",
-          "--always-approve",
-          "--permission-mode",
-          "dontAsk",
         ]),
       );
+      expect(args).not.toContain("--always-approve");
+      expect(args).not.toContain("--permission-mode");
       expect(await fs.readFile(path.join(root, "Agents.md"), "utf8")).toContain("You are Grok.");
       expect(await pathExists(path.join(root, ".claude", "skills", "paperclip", "SKILL.md"))).toBe(true);
       await options.onLog?.("stdout", '{"type":"text","data":"done"}\n');

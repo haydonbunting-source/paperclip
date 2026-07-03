@@ -271,20 +271,8 @@ printf '%s\\n' '{"type":"result","subtype":"success","session_id":"cursor-sessio
     const runner = {
       execute: async (input: { command: string; args?: string[]; env?: Record<string, string> }) => {
         runnerState.commands.push(input.command);
-        if (input.command === "sh") {
-          return {
-            exitCode: 0,
-          signal: null,
-          timedOut: false,
-          stdout: "",
-          stderr: "",
-          pid: 555,
-          startedAt: new Date().toISOString(),
-        };
-        }
-
         return runChildProcess(`cursor-fresh-lease-${runnerState.commands.length}`, input.command, input.args ?? [], {
-          cwd: remoteWorkspace,
+          cwd: input.command === "sh" ? (input as { cwd?: string }).cwd ?? "/" : remoteWorkspace,
           env: input.env ?? {},
           timeoutSec: 30,
           graceSec: 5,
@@ -348,5 +336,5 @@ printf '%s\\n' '{"type":"result","subtype":"success","session_id":"cursor-sessio
       else process.env.HOME = previousHome;
       await fs.rm(rootDir, { recursive: true, force: true });
     }
-  });
+  }, 15_000);
 });

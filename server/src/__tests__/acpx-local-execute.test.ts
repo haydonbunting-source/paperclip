@@ -199,7 +199,7 @@ describe("acpx_local execute", () => {
         mode: "persistent",
         acpSessionId: "acp-1",
       });
-      expect(metaPermissionNote).toContain("Effective ACPX permission mode: approve-all");
+      expect(metaPermissionNote).toContain("Effective ACPX permission mode: deny-all");
       const parsed = parseStdoutLogs(logs);
       expect(parsed.map((event) => event.type)).toEqual([
         "acpx.session",

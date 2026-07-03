@@ -5,7 +5,7 @@ export const label = "ACPX (local)";
 
 export const DEFAULT_ACPX_LOCAL_AGENT = "claude";
 export const DEFAULT_ACPX_LOCAL_MODE = "persistent";
-export const DEFAULT_ACPX_LOCAL_PERMISSION_MODE = "approve-all";
+export const DEFAULT_ACPX_LOCAL_PERMISSION_MODE = "deny-all";
 export const DEFAULT_ACPX_LOCAL_NON_INTERACTIVE_PERMISSIONS = "deny";
 export const DEFAULT_ACPX_LOCAL_TIMEOUT_SEC = 0;
 export const DEFAULT_ACPX_LOCAL_WARM_HANDLE_IDLE_MS = 0;
@@ -37,7 +37,7 @@ Core fields:
 - agentCommand (string, optional): custom ACP command when agent=custom, or an override for a built-in ACP agent command.
 - mode (string, optional): persistent or oneshot. Defaults to persistent. Paperclip keeps session state persistent and may close the live process between runs.
 - cwd (string, optional): default absolute working directory fallback for the agent process.
-- permissionMode (string, optional): defaults to approve-all, meaning ACPX permission requests are auto-approved.
+- permissionMode (string, optional): defaults to deny-all. Set approve-reads or approve-all explicitly only for trusted/sandboxed agents.
 - nonInteractivePermissions (string, optional): fallback behavior when ACPX cannot ask interactively. Supported values are deny and fail.
 - stateDir (string, optional): ACPX state directory. Defaults to a Paperclip-managed company/agent scoped location.
 - instructionsFilePath (string, optional): absolute path to a markdown instructions file used by Paperclip prompt construction.

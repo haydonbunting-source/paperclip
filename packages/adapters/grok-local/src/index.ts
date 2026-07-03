@@ -26,7 +26,8 @@ Core fields:
 - instructionsFilePath (string, optional): absolute path to a markdown instructions file. Paperclip stages it into the execution workspace as \`Agents.md\` when safe, otherwise falls back to \`--rules @file\`
 - promptTemplate (string, optional): run prompt template
 - model (string, optional): Grok model id. Defaults to grok-build.
-- permissionMode (string, optional): Grok permission mode. Defaults to \`dontAsk\`
+- permissionMode (string, optional): Grok permission mode. No permission-bypass mode is passed by default.
+- alwaysApprove (boolean, optional, default false): pass \`--always-approve\` only when explicitly enabled for trusted sandboxed agents
 - reasoningEffort (string, optional): Grok reasoning effort passed via \`--reasoning-effort\`
 - maxTurns (number, optional): maximum agent turns for the run
 - command (string, optional): defaults to "grok"

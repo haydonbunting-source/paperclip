@@ -1883,14 +1883,42 @@ export function refreshPaperclipWorkspaceEnvForExecution(input: {
   return shapedWorkspaceEnv;
 }
 
+const SAFE_INHERITED_CHILD_ENV_KEYS = new Set([
+  "PATH",
+  "Path",
+  "HOME",
+  "USER",
+  "USERNAME",
+  "LOGNAME",
+  "SHELL",
+  "LANG",
+  "LC_ALL",
+  "LC_CTYPE",
+  "TERM",
+  "COLORTERM",
+  "FORCE_COLOR",
+  "NO_COLOR",
+  "TMPDIR",
+  "TEMP",
+  "TMP",
+  "SystemRoot",
+  "WINDIR",
+  "PATHEXT",
+  "ComSpec",
+  "XDG_CONFIG_HOME",
+  "XDG_CACHE_HOME",
+  "XDG_DATA_HOME",
+  "CLAUDE_CONFIG_DIR",
+  "PAPERCLIP_RUNTIME_API_URL",
+  "PAPERCLIP_LISTEN_HOST",
+  "PAPERCLIP_LISTEN_PORT",
+]);
+
 export function sanitizeInheritedPaperclipEnv(baseEnv: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
-  const env: NodeJS.ProcessEnv = { ...baseEnv };
-  for (const key of Object.keys(env)) {
-    if (!key.startsWith("PAPERCLIP_")) continue;
-    if (key === "PAPERCLIP_RUNTIME_API_URL") continue;
-    if (key === "PAPERCLIP_LISTEN_HOST") continue;
-    if (key === "PAPERCLIP_LISTEN_PORT") continue;
-    delete env[key];
+  const env: NodeJS.ProcessEnv = {};
+  for (const key of SAFE_INHERITED_CHILD_ENV_KEYS) {
+    const value = baseEnv[key];
+    if (typeof value === "string" && value.length > 0) env[key] = value;
   }
   return env;
 }

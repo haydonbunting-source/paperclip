@@ -21,7 +21,8 @@ The `gemini_local` adapter runs Google's Gemini CLI locally. It supports session
 | `env` | object | No | Environment variables (supports secret refs) |
 | `timeoutSec` | number | No | Process timeout (0 = no timeout) |
 | `graceSec` | number | No | Grace period before force-kill |
-| `yolo` | boolean | No | Pass `--approval-mode yolo` for unattended operation |
+| `sandbox` | boolean | No | Run Gemini sandbox mode (default: `true`) |
+| `dangerouslySkipPermissions` | boolean | No | Pass `--approval-mode yolo` and allow `--sandbox=none` only when explicitly enabled for trusted sandboxed agents (default: `false`) |
 
 ## Session Persistence
 
@@ -42,4 +43,4 @@ Use the "Test Environment" button in the UI to validate the adapter config. It c
 - Gemini CLI is installed and accessible
 - Working directory is absolute and available (auto-created if missing and permitted)
 - API key/auth hints (`GEMINI_API_KEY` or `GOOGLE_API_KEY`)
-- A live hello probe (`gemini --output-format json "Respond with hello."`) to verify CLI readiness
+- A live hello probe (`gemini --output-format stream-json --prompt "Respond with hello."`) to verify CLI readiness

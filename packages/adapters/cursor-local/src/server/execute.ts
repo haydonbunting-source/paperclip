@@ -26,6 +26,7 @@ import {
 import {
   asString,
   asNumber,
+  asBoolean,
   asStringArray,
   parseObject,
   buildPaperclipEnv,
@@ -33,6 +34,7 @@ import {
   ensureAbsoluteDirectory,
   ensurePaperclipSkillSymlink,
   ensurePathInEnv,
+  sanitizeInheritedPaperclipEnv,
   refreshPaperclipWorkspaceEnvForExecution,
   readPaperclipRuntimeSkillEntries,
   readPaperclipIssueWorkModeFromContext,
@@ -343,7 +345,7 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
     if (fromExtraArgs.length > 0) return fromExtraArgs;
     return asStringArray(config.args);
   })();
-  const autoTrustEnabled = !hasCursorTrustBypassArg(extraArgs);
+  const autoTrustEnabled = asBoolean(config.dangerouslySkipPermissions, false) && !hasCursorTrustBypassArg(extraArgs);
   let restoreRemoteWorkspace: (() => Promise<void>) | null = null;
   let localSkillsDir: string | null = null;
   let remoteRuntimeRootDir: string | null = null;
@@ -437,7 +439,7 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
   }
   const runtimeExecutionTarget = overrideAdapterExecutionTargetRemoteCwd(executionTarget, effectiveExecutionCwd);
   const effectiveEnv = Object.fromEntries(
-    Object.entries({ ...process.env, ...env }).filter(
+    Object.entries({ ...sanitizeInheritedPaperclipEnv(process.env), ...env }).filter(
       (entry): entry is [string, string] => typeof entry[1] === "string",
     ),
   );
@@ -466,7 +468,7 @@ export async function execute(ctx: AdapterExecutionContext): Promise<AdapterExec
     if (paperclipBridge) {
       Object.assign(env, paperclipBridge.env);
       loggedEnv = buildInvocationEnvForLogs(env, {
-        runtimeEnv: ensurePathInEnv({ ...process.env, ...env }),
+        runtimeEnv: ensurePathInEnv({ ...sanitizeInheritedPaperclipEnv(process.env), ...env }),
         includeRuntimeKeys: ["HOME"],
         resolvedCommand,
       });

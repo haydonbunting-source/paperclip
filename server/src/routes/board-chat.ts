@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Db } from "@paperclipai/db";
 import type { DeploymentMode } from "@paperclipai/shared";
+import { sanitizeInheritedPaperclipEnv } from "@paperclipai/adapter-utils/server-utils";
 import { instanceSettingsService, issueService } from "../services/index.js";
 import { assertCompanyAccess, getActorInfo } from "./authz.js";
 
@@ -233,7 +234,6 @@ export function boardChatRoutes(
       systemPrompt,
       "--model",
       "sonnet",
-      "--dangerously-skip-permissions",
     ];
 
     liveBoardChats += 1;
@@ -248,7 +248,7 @@ export function boardChatRoutes(
       stdio: ["pipe", "pipe", "pipe"],
       cwd: "/tmp",
       env: {
-        ...process.env,
+        ...sanitizeInheritedPaperclipEnv(process.env),
         PAPERCLIP_API_URL: apiUrl,
         PAPERCLIP_COMPANY_ID: companyId,
       },

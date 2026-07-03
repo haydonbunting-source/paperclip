@@ -31,7 +31,7 @@ async function makeConfigHome(initialConfig?: Record<string, unknown>) {
 }
 
 describe("prepareOpenCodeRuntimeConfig", () => {
-  it("injects an external_directory allow rule by default", async () => {
+  it("does not inject an external_directory allow rule by default", async () => {
     const configHome = await makeConfigHome({
       permission: {
         read: "allow",
@@ -42,6 +42,24 @@ describe("prepareOpenCodeRuntimeConfig", () => {
     const prepared = await prepareOpenCodeRuntimeConfig({
       env: { XDG_CONFIG_HOME: configHome },
       config: {},
+    });
+
+    expect(prepared.env).toEqual({ XDG_CONFIG_HOME: configHome });
+    expect(prepared.notes).toEqual([]);
+    await prepared.cleanup();
+  });
+
+  it("injects an external_directory allow rule when explicitly enabled", async () => {
+    const configHome = await makeConfigHome({
+      permission: {
+        read: "allow",
+      },
+      theme: "system",
+    });
+
+    const prepared = await prepareOpenCodeRuntimeConfig({
+      env: { XDG_CONFIG_HOME: configHome },
+      config: { dangerouslySkipPermissions: true },
     });
     cleanupPaths.add(prepared.env.XDG_CONFIG_HOME);
 
@@ -84,7 +102,7 @@ describe("prepareOpenCodeRuntimeConfig", () => {
         XDG_CONFIG_HOME: configHome,
         PAPERCLIP_OPENCODE_PROVIDERS: JSON.stringify(providers),
       },
-      config: {},
+      config: { dangerouslySkipPermissions: true },
     });
     cleanupPaths.add(prepared.env.XDG_CONFIG_HOME);
 
@@ -106,7 +124,7 @@ describe("prepareOpenCodeRuntimeConfig", () => {
     try {
       const prepared = await prepareOpenCodeRuntimeConfig({
         env: { XDG_CONFIG_HOME: configHome },
-        config: {},
+        config: { dangerouslySkipPermissions: true },
       });
       cleanupPaths.add(prepared.env.XDG_CONFIG_HOME);
       const runtimeConfig = JSON.parse(
@@ -130,7 +148,7 @@ describe("prepareOpenCodeRuntimeConfig", () => {
     };
     const prepared = await prepareOpenCodeRuntimeConfig({
       env: { XDG_CONFIG_HOME: configHome, PAPERCLIP_OPENCODE_PROVIDERS: JSON.stringify(providers), ANTHROPIC_API_KEY: "sk-bf-REALVK" },
-      config: {},
+      config: { dangerouslySkipPermissions: true },
     });
     cleanupPaths.add(prepared.env.XDG_CONFIG_HOME);
     const runtimeConfig = JSON.parse(
@@ -147,7 +165,7 @@ describe("prepareOpenCodeRuntimeConfig", () => {
     const providers = { bifrost: { options: { apiKey: "{env:DEFINITELY_UNSET_VAR_XYZ}" }, models: { "x/y": {} } } };
     const prepared = await prepareOpenCodeRuntimeConfig({
       env: { XDG_CONFIG_HOME: configHome, PAPERCLIP_OPENCODE_PROVIDERS: JSON.stringify(providers) },
-      config: {},
+      config: { dangerouslySkipPermissions: true },
     });
     cleanupPaths.add(prepared.env.XDG_CONFIG_HOME);
     const runtimeConfig = JSON.parse(
@@ -161,7 +179,7 @@ describe("prepareOpenCodeRuntimeConfig", () => {
     const configHome = await makeConfigHome({ permission: { read: "allow" } });
     const prepared = await prepareOpenCodeRuntimeConfig({
       env: { XDG_CONFIG_HOME: configHome, PAPERCLIP_OPENCODE_SMALL_MODEL: "example/model-a" },
-      config: {},
+      config: { dangerouslySkipPermissions: true },
     });
     cleanupPaths.add(prepared.env.XDG_CONFIG_HOME);
     const runtimeConfig = JSON.parse(
@@ -175,7 +193,7 @@ describe("prepareOpenCodeRuntimeConfig", () => {
     const configHome = await makeConfigHome({ permission: { read: "allow" } });
     const prepared = await prepareOpenCodeRuntimeConfig({
       env: { XDG_CONFIG_HOME: configHome, PAPERCLIP_OPENCODE_PROVIDERS: "not json" },
-      config: {},
+      config: { dangerouslySkipPermissions: true },
     });
     cleanupPaths.add(prepared.env.XDG_CONFIG_HOME);
     const runtimeConfig = JSON.parse(
@@ -192,7 +210,7 @@ describe("prepareOpenCodeRuntimeConfig", () => {
     const configHome = await makeConfigHome({ permission: { read: "allow" } });
     const prepared = await prepareOpenCodeRuntimeConfig({
       env: { XDG_CONFIG_HOME: configHome, PAPERCLIP_OPENCODE_PROVIDERS: "[1,2,3]" },
-      config: {},
+      config: { dangerouslySkipPermissions: true },
     });
     cleanupPaths.add(prepared.env.XDG_CONFIG_HOME);
     const runtimeConfig = JSON.parse(
@@ -215,7 +233,7 @@ describe("prepareOpenCodeRuntimeConfig", () => {
           usable: { options: { baseURL: "http://gateway.example/v1" } },
         }),
       },
-      config: {},
+      config: { dangerouslySkipPermissions: true },
     });
     cleanupPaths.add(prepared.env.XDG_CONFIG_HOME);
     const runtimeConfig = JSON.parse(
@@ -236,7 +254,7 @@ describe("prepareOpenCodeRuntimeConfig", () => {
         XDG_CONFIG_HOME: configHome,
         PAPERCLIP_OPENCODE_PROVIDERS: JSON.stringify({ bifrost: "http://gateway.example/v1" }),
       },
-      config: {},
+      config: { dangerouslySkipPermissions: true },
     });
     cleanupPaths.add(prepared.env.XDG_CONFIG_HOME);
     const runtimeConfig = JSON.parse(

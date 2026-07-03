@@ -6,9 +6,11 @@ import type {
 import {
   asNumber,
   asString,
+  asBoolean,
   asStringArray,
   parseObject,
   ensurePathInEnv,
+  sanitizeInheritedPaperclipEnv,
 } from "@paperclipai/adapter-utils/server-utils";
 import {
   ensureAdapterExecutionTargetCommandResolvable,
@@ -171,7 +173,7 @@ export async function testEnvironment(
   });
   command = finalSandboxCommand.command;
   env = finalSandboxCommand.env;
-  const runtimeEnv = ensurePathInEnv({ ...process.env, ...env });
+  const runtimeEnv = ensurePathInEnv({ ...sanitizeInheritedPaperclipEnv(process.env), ...env });
   try {
     await ensureAdapterExecutionTargetCommandResolvable(command, target, cwd, runtimeEnv);
     checks.push({
@@ -296,7 +298,7 @@ export async function testEnvironment(
         if (fromExtraArgs.length > 0) return fromExtraArgs;
         return asStringArray(config.args);
       })();
-      const autoTrustEnabled = !hasCursorTrustBypassArg(extraArgs);
+      const autoTrustEnabled = asBoolean(config.dangerouslySkipPermissions, false) && !hasCursorTrustBypassArg(extraArgs);
       const args = ["-p", "--mode", "ask", "--output-format", "json", "--workspace", cwd];
       if (model) args.push("--model", model);
       if (autoTrustEnabled) args.push("--yolo");
